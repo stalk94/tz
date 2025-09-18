@@ -77,17 +77,22 @@ export default function App() {
             {showStats && (
                 <div className="stats-box">
                     {loading || !stats || stats.count === 0 ? (
-                        <p className="loader">Загрузка…</p>
+                        <div className="loader">Загрузка…</div>
                     ) : (
-                        <>
-                            <p>Получено котировок: {stats.count}</p>
-                            <p>Среднее: {stats.mean}</p>
-                            <p>Стандартное отклонение: {stats.std}</p>
-                            <p>Медиана: {stats.median}</p>
-                            <p>Мода (приближённая): {stats.mode}</p>
-                            <p>Потерянные котировки: {stats.lost}</p>
-                            <p>Время расчёта: {stats.time} мс</p>
-                        </>
+                            <div className="stats-card">
+                                <h3>📊 Статистика</h3>
+                                <table>
+                                    <tbody>
+                                        <tr><td>Получено котировок:</td><td>{stats.count}</td></tr>
+                                        <tr><td>Среднее:</td><td>{stats.mean}</td></tr>
+                                        <tr><td>Станд. отклонение:</td><td>{stats.std}</td></tr>
+                                        <tr><td>Медиана:</td><td>{stats.median}</td></tr>
+                                        <tr><td>Мода (≈):</td><td>{stats.mode}</td></tr>
+                                        <tr><td>Потерянные котировки:</td><td>{stats.lost}</td></tr>
+                                        <tr><td>Время расчёта:</td><td>{stats.time} мс</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                     )}
                 </div>
             )}
