@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Backoff } from "../src/backoff.js";
+import Backoff  from "../src/class/Backoff";
 
 
 describe("Backoff", () => {

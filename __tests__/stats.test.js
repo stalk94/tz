@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Stats } from "../src/Stats";
+import Stats from "../src/class/Stats";
 
 
 describe("Stats stream algorithms", () => {
