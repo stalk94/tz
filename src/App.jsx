@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import Monitoring from './utils/monitoring';
 import "./styles.css";
 
 
@@ -110,6 +111,8 @@ export default function App() {
                     {showStats ? "Скрыть" : "Статистика"}
                 </button>
             </div>
+
+            <Monitoring />
         </section>
     );
 }
