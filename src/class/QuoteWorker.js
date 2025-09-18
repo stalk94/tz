@@ -1,5 +1,5 @@
 import Stats from "./Stats";
-import Backoff from "./Backoff";
+import Backoff from "./Backof";
 
 
 const INTERVAL_IDLE_TIMER = 1000;
