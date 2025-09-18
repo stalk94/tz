@@ -41,4 +41,7 @@ self.onmessage = (e) => {
 		// 💡 ручная вставка аномалии для теста
 		qw.stats.add(qw.stats.prevId + 1, qw.stats.mean + 10 * (qw.stats.std || 1000));
 	}
+	else if (e.data.type === "reset-all") {
+    	qw.resetAll();
+  	}
 }

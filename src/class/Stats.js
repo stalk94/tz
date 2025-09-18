@@ -120,6 +120,17 @@ class Stats {
             count: this.n,
         };
     }
+
+    resetAll() {
+        this.n = 0;
+        this.mean = 0;
+        this.M2 = 0;
+        this.prevId = null;
+        this.lost = 0;
+        this.medianEstimator = new P2Median();
+        this.sketch = new CountMinSketch();
+        this.candidates.clear();
+    }
 }
 
 

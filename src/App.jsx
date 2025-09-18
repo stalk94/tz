@@ -87,7 +87,16 @@ export default function App() {
                         <div className="loader">Загрузка…</div>
                     ) : (
                             <div className="stats-card">
-                                <h3>📊 Статистика</h3>
+                                <h3>
+                                    📊 Статистика
+                                    <button
+                                        className="reset-btn"
+                                        onClick={() => workerRef.current?.postMessage?.({ type: "reset-all" })}
+                                        title="Сбросить статистику"
+                                    >
+                                        ⟲
+                                    </button>
+                                </h3>
                                 <table>
                                     <tbody>
                                         <tr><td>Получено котировок:</td><td>{stats.count}</td></tr>

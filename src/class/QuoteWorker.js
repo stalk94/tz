@@ -132,6 +132,15 @@ class QuoteWorker {
 
         self.postMessage(response);
     }
+
+    resetAll() {
+        this.stats.resetAll();
+        
+        self.postMessage({ 
+            type: "stats", 
+            payload: this.stats.getStats() 
+        });
+    }
 }
 
 
