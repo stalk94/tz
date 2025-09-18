@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 
+
 export default function MonitorWidget() {
     const [state, setState] = useState({
         cpuLoad: 0,

@@ -1,5 +1,5 @@
 import Stats from "./Stats";
-import { Backoff } from "./backoff";
+import Backoff from "./Backoff";
 
 
 class QuoteWorker {
@@ -12,7 +12,10 @@ class QuoteWorker {
         this.backoff = new Backoff(250, 8000);
 
         this.stats.onAnomaly = (anomaly) => {
-            self.postMessage({ type: "anomaly", payload: anomaly });
+            self.postMessage({ 
+                type: "anomaly", 
+                payload: anomaly 
+            });
         };
     }
 
@@ -28,8 +31,14 @@ class QuoteWorker {
         this.idleTimer = setInterval(() => {
             if (this.stoppedByUser || !this.socket) return;
             const idle = Date.now() - this.lastMessageAt;
+
             if (idle > 5000) {
-                try { this.socket.close(); } catch { }
+                try {
+                    this.socket.close(); 
+                } 
+                catch (err) { 
+                    console.error('SOCKET close error: ', err);
+                }
             }
         }, 1000);
     }
@@ -91,6 +100,7 @@ class QuoteWorker {
     start() {
         this.stoppedByUser = false;
         this.stats = new Stats();
+
         this.stats.onAnomaly = (anomaly) => {
             self.postMessage({ type: "anomaly", payload: anomaly });
         };
@@ -102,13 +112,24 @@ class QuoteWorker {
 
     stop() {
         this.stoppedByUser = true;
-        try { this.socket?.close(); } catch { }
+
+        try {
+             this.socket?.close(); 
+        } 
+        catch (err) { 
+            console.error('SOCKET stop error: ', err);
+        }
+
         this.socket = null;
         this.clearIdle();
     }
 
     getStats() {
-        const response = { type: "stats", payload: this.stats.getStats() };
+        const response = { 
+            type: "stats", 
+            payload: this.stats.getStats() 
+        }
+
         self.postMessage(response);
     }
 }

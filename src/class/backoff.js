@@ -1,4 +1,4 @@
-export class Backoff {
+class Backoff {
     /**
      * @param {number} [base=250]  Базовая задержка (мс)
      * @param {number} [max=10000] Максимальная задержка (мс)
@@ -23,3 +23,6 @@ export class Backoff {
         this.attempt = 0;
     }
 }
+
+
+export default Backoff;

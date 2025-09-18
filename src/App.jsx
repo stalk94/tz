@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import Monitoring from './utils/monitoring';
-import { showAnomaly } from './utils/anomaly';			// фича
+import Monitoring from './components/monitoring';
+import { showAnomaly } from './components/anomaly';			// фича
 import "./styles.css";
 
 
