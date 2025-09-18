@@ -6,7 +6,23 @@ body {
     padding: 2rem;
 }
 
+.loader {
+    font-style: italic;
+    color: #666;
+    animation: blink 1s infinite;
+}
 
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
 .buttons {
     display: flex;
     gap: 1rem;
