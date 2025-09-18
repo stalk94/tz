@@ -3,7 +3,7 @@
  * @property {number|null} mean    Среднее значение
  * @property {number|null} std     Стандартное отклонение
  * @property {number|null} median  Медиана (через P²)
- * @property {number|null} mode    Мода (аппроксимация)
+ * @property {number|null} mode    Мода (аппроксимация через Count-Min Sketch)
  * @property {number}      lost    Количество потерянных котировок
  * @property {number}      [time]  Время расчёта (мс)
  * @property {number}      [count] Всего котировок
@@ -20,7 +20,7 @@ class CountMinSketch {
         this.hashSeeds = Array.from({ length: depth }, (_, i) => i * 31 + 7);
     }
     hash(x, seed) {
-        return (Math.imul(Math.floor(x * 100) ^ seed, 2654435761) >>> 0) % this.width;
+        return (Math.imul(x ^ seed, 2654435761) >>> 0) % this.width;
     }
     add(x) {
         this.hashSeeds.forEach((seed, i) => {
@@ -44,10 +44,10 @@ class CountMinSketch {
  */
 class P2Median {
     constructor () {
-        this.n = 0;                // число элементов
-        this.q = [];               // значения в узлах
-        this.np = [0, 0.5, 1];     // целевые квантили (0%, 50%, 100%)
-        this.pos = [1, 2, 3];      // позиции узлов
+        this.n = 0;
+        this.q = [];
+        this.np = [0, 0.5, 1];
+        this.pos = [1, 2, 3];
         this.desired = [1, 1.5, 3];
     }
 
@@ -59,24 +59,28 @@ class P2Median {
             return;
         }
 
-        // обновляем узлы
         if (x < this.q[0]) this.q[0] = x;
         if (x > this.q[2]) this.q[2] = x;
 
-        // считаем позиции
         for (let i = 0; i < 3; i++) {
             this.desired[i] += this.np[i];
         }
 
-        // интерполяция для q[1] (медианы)
         const d = this.desired[1] - this.pos[1];
-        if ((d >= 1 && this.pos[1] < this.pos[2] - 1) || (d <= -1 && this.pos[1] > this.pos[0] + 1)) {
+        if (
+            (d >= 1 && this.pos[1] < this.pos[2] - 1) ||
+            (d <= -1 && this.pos[1] > this.pos[0] + 1)
+        ) {
             const sign = Math.sign(d);
             const newVal =
                 this.q[1] +
                 (sign / (this.pos[2] - this.pos[0])) *
-                ((this.pos[1] - this.pos[0] + sign) * (this.q[2] - this.q[1]) / (this.pos[2] - this.pos[1]) +
-                    (this.pos[2] - this.pos[1] - sign) * (this.q[1] - this.q[0]) / (this.pos[1] - this.pos[0]));
+                ((this.pos[1] - this.pos[0] + sign) *
+                    (this.q[2] - this.q[1]) /
+                    (this.pos[2] - this.pos[1]) +
+                    (this.pos[2] - this.pos[1] - sign) *
+                    (this.q[1] - this.q[0]) /
+                    (this.pos[1] - this.pos[0]));
             this.q[1] = Math.min(Math.max(newVal, this.q[0]), this.q[2]);
             this.pos[1] += sign;
         }
@@ -88,6 +92,7 @@ class P2Median {
         return this.q[1];
     }
 }
+
 
 /**
  * Основной класс статистики
@@ -101,7 +106,14 @@ export class Stats {
         this.lost = 0;
 
         this.medianEstimator = new P2Median();
+
         this.sketch = new CountMinSketch();
+        this.candidates = new Map();
+        this.topK = 8;
+    }
+
+    _q(x) {
+        return Math.round(x * 100); // квантование до 0.01
     }
 
     add(id, x) {
@@ -110,17 +122,27 @@ export class Stats {
         }
         this.prevId = id;
 
-        // среднее + std (Welford)
+        // среднее и std
         this.n++;
         const delta = x - this.mean;
         this.mean += delta / this.n;
         this.M2 += delta * (x - this.mean);
 
-        // медиана через P²
+        // медиана
         this.medianEstimator.add(x);
 
-        // мода через CMS
-        this.sketch.add(x);
+        // мода
+        const key = this._q(x);
+        this.sketch.add(key);
+        const est = this.sketch.estimate(key);
+        this.candidates.set(key, est);
+        if (this.candidates.size > this.topK * 4) {
+            const top = [...this.candidates.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, this.topK);
+            this.candidates.clear();
+            for (const [k, v] of top) this.candidates.set(k, v);
+        }
     }
 
     getStats() {
@@ -129,8 +151,15 @@ export class Stats {
         const std = this.n > 1 ? Math.sqrt(this.M2 / (this.n - 1)) : null;
         const median = this.medianEstimator.get();
 
-        // ⚠️ пока мода ≈ медиана (для аппроксимации)
-        const mode = median;
+        let mode = null;
+        let best = -1;
+        for (const k of this.candidates.keys()) {
+            const est = this.sketch.estimate(k);
+            if (est > best) {
+                best = est;
+                mode = k / 100;
+            }
+        }
 
         const end = performance.now();
 
