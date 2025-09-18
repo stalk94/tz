@@ -30,11 +30,33 @@ class Stats {
         this.sketch = new CountMinSketch();             // структура для частот (для моды)
         this.candidates = new Map();                    // топ-кандидаты для моды
         this.topK = 8;                                  // ограничение по размеру "словаря"
+
+        this.onAnomaly = null;
     }
 
     /** приватный */
     _q(x) {
         return Math.round(x * 100);                     // квантование числа до 0.01 (чтобы мода считалась быстрее)
+    }
+    
+    /** приватный */
+    _checkAnomaly(value) {
+        if (this.n < 2) return; // нужно хотя бы 2 значения
+        const std = this.n > 1 ? Math.sqrt(this.M2 / (this.n - 1)) : 0;
+        if (std === 0) return;
+        const z = (value - this.mean) / std;
+        if (Math.abs(z) > 4) {
+            const anomaly = {
+                id: this.n,
+                value,
+                z: parseFloat(z.toFixed(2)),
+                mean: parseFloat(this.mean.toFixed(2)),
+                std: parseFloat(std.toFixed(2)),
+            };
+
+            this.lastAnomaly = anomaly;
+            this.onAnomaly?.(anomaly);
+        }
     }
 
     add(id, x) {
@@ -65,6 +87,8 @@ class Stats {
             this.candidates.clear();
             for (const [k, v] of top) this.candidates.set(k, v);
         }
+
+        this._checkAnomaly(x);
     }
 
     getStats() {

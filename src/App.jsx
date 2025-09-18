@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Monitoring from './utils/monitoring';
+import { showAnomaly } from './utils/anomaly';			// фича
 import "./styles.css";
 
 
@@ -34,9 +35,14 @@ export default function App() {
                 if (e.data.type === "stats") {
                     const payload = e.data.payload;
                     setStats(payload);
+
                     if (payload.count > 0) {
-                        setLoading(false); // только если реально пришли данные
+                        setLoading(false);      // только если реально пришли данные
                     }
+                }
+                // фича аномалий
+                if (e.data.type === "anomaly") {
+                    showAnomaly( e.data.payload);
                 }
             };
             workerRef.current.postMessage({ type: "start" });
