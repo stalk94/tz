@@ -19,7 +19,6 @@ import QuoteWorker from "./class/QuoteWorker";
  */
 
 
-
 const qw = new QuoteWorker();
 
 

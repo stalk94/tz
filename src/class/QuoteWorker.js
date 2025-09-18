@@ -47,6 +47,7 @@ class QuoteWorker {
         this.socket.onmessage = (msg) => {
             try {
                 const data = JSON.parse(msg.data);
+
                 if (
                     typeof data !== "object" || data === null ||
                     typeof data.id !== "number" || !Number.isFinite(data.id) ||
@@ -66,12 +67,16 @@ class QuoteWorker {
 
                 this.stats.add(id, value);
                 this.lastMessageAt = Date.now();
-            } catch (err) {
+            } 
+            catch (err) {
                 console.error(`❗⚠️ JSON error ${err}`);
             }
         };
 
-        this.socket.onerror = () => { };
+        this.socket.onerror = (event) => {
+            console.error("❗⚠️ WebSocket error event:", event);
+        };
+        
         this.socket.onclose = () => {
             this.clearIdle();
             if (!this.stoppedByUser) {
@@ -89,6 +94,7 @@ class QuoteWorker {
         this.stats.onAnomaly = (anomaly) => {
             self.postMessage({ type: "anomaly", payload: anomaly });
         };
+
         if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
             this.connect();
         }
