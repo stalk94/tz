@@ -1,4 +1,4 @@
-import { Stats } from "./Stats";
+import Stats from "./class/Stats";
 import { Backoff } from "./backoff.js";
 
 /**
@@ -15,7 +15,7 @@ import { Backoff } from "./backoff.js";
  *
  * @typedef {Object} WorkerResponse
  * @property {"stats"} type
- * @property {import("./Stats").StatsResult} payload
+ * @property {import("./class/Stats").StatsResult} payload
  */
 
 let stats = new Stats();
@@ -51,19 +51,44 @@ function connect() {
 		backoff.reset();
 		lastMessageAt = Date.now();
 		watchIdle();
-	}
+	};
+
 	socket.onmessage = (msg) => {
-		lastMessageAt = Date.now();
 		try {
 			const data = JSON.parse(msg.data);
-			let { id, value } = data;
-			// искусственно «теряем» часть котировок
-			// if (Math.random() < 0.01) id += 2;
-			stats.add(id, value);
-		} catch { }
-	}
 
-	socket.onerror = () => { };
+			if (
+				typeof data !== "object" ||
+				data === null ||
+				typeof data.id !== "number" ||
+				!Number.isFinite(data.id) ||
+				data.id < 0 || !Number.isSafeInteger(data.id) ||
+				typeof data.value !== "number" ||
+				!Number.isFinite(data.value)||
+				data.value < 0 ||         				// ❗ отрицательные котировки игнорим
+				data.value > 1e6						// ❗ слишком большие котировки игнорим
+			) {
+				// Некорректные данные — пропускаем
+				console.warn('ignore');
+				return;
+			}
+
+			let { id, value } = data;
+			if (id <= stats.prevId) return; 			// игнорим старые/дубли
+
+			// ⚠️ искусственно теряем котировки иногда
+			// if (Math.random() < 0.01)id += 2;
+			
+
+			stats.add(id, value);
+		} 
+		catch {
+			// Некорректный JSON — пропускаем
+			console.error('❗⚠️ JSON error')
+		}
+	};
+
+	socket.onerror = () => {};
 	socket.onclose = () => {
 		clearIdle();
 		if (!stoppedByUser) {
