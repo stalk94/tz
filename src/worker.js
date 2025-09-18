@@ -26,7 +26,7 @@ let lastMessageAt = Date.now();
 let idleTimer = null;
 const backoff = new Backoff(250, 8000); // от 250мс до 8с
 
-
+///////////////////////////////////////////////////////////////
 function clearIdle() {
 	if (idleTimer) {
 		clearInterval(idleTimer);
@@ -43,7 +43,6 @@ function watchIdle() {
 		}
 	}, 1000);
 }
-
 function connect() {
 	const url = "wss://trade.termplat.com:8800/?password=1234";
 	socket = new WebSocket(url);
@@ -75,7 +74,7 @@ function connect() {
 		}
 	};
 }
-
+///////////////////////////////////////////////////////////////
 
 
 /**
