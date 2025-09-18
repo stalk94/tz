@@ -2,6 +2,12 @@ import Stats from "./Stats";
 import Backoff from "./Backoff";
 
 
+const INTERVAL_IDLE_TIMER = 1000;
+const IDLE_MAX_TIMEOUT = 5000;
+const BASE_BACOFF_TIMEOUT = 250;
+const MAX_BACOFF_TIMEOUT = 8000;
+
+
 class QuoteWorker {
     constructor () {
         this.stats = new Stats();
@@ -9,7 +15,7 @@ class QuoteWorker {
         this.stoppedByUser = false;
         this.lastMessageAt = Date.now();
         this.idleTimer = null;
-        this.backoff = new Backoff(250, 8000);
+        this.backoff = new Backoff(BASE_BACOFF_TIMEOUT, MAX_BACOFF_TIMEOUT);
 
         this.stats.onAnomaly = (anomaly) => {
             self.postMessage({ 
@@ -28,11 +34,12 @@ class QuoteWorker {
 
     watchIdle() {
         this.clearIdle();
+
         this.idleTimer = setInterval(() => {
             if (this.stoppedByUser || !this.socket) return;
             const idle = Date.now() - this.lastMessageAt;
 
-            if (idle > 5000) {
+            if (idle > IDLE_MAX_TIMEOUT) {
                 try {
                     this.socket.close(); 
                 } 
@@ -40,7 +47,7 @@ class QuoteWorker {
                     console.error('SOCKET close error: ', err);
                 }
             }
-        }, 1000);
+        }, INTERVAL_IDLE_TIMER);
     }
 
     connect() {
@@ -90,6 +97,7 @@ class QuoteWorker {
             this.clearIdle();
             if (!this.stoppedByUser) {
                 const delay = this.backoff.next();
+
                 setTimeout(() => {
                     if (!this.stoppedByUser) this.connect();
                 }, delay);
