@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import Monitoring from './components/monitoring';
+import MonitoringWidget from './components/monitoring';
 import { showAnomaly } from './components/anomaly';			// фича
 import "./styles.css";
 
@@ -118,7 +118,7 @@ export default function App() {
                 </button>
             </div>
 
-            <Monitoring />
+            <MonitoringWidget />
         </section>
     );
 }

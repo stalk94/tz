@@ -18,7 +18,7 @@ import QuoteWorker from "./class/QuoteWorker";
  * @property {import("./class/Stats").StatsResult} payload
  */
 
-
+// init worker class
 const qw = new QuoteWorker();
 
 

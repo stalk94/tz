@@ -1,3 +1,5 @@
+
+
 function ensureAnomalyContainer() {
     let c = document.getElementById('anomaly-container');
     if (c) return c;
@@ -16,7 +18,6 @@ function ensureAnomalyContainer() {
     document.body.appendChild(c);
     return c;
 }
-
 function playPing() {
     try {
         // короткий «бип» (base64, очень маленький WAV)
@@ -25,6 +26,8 @@ function playPing() {
         a.play().catch(() => {/* игнор */ });
     } catch (e) { /* игнор */ }
 }
+
+
 
 /**
  * Показывает алерт об аномалии.
