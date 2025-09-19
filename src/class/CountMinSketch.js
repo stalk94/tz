@@ -9,19 +9,21 @@ class CountMinSketch {
         this.hashSeeds = Array.from({ length: depth }, (_, i) => i * 31 + 7);
     }
     
-    hash(x, seed) {
+    #hash(x, seed) {
         return (Math.imul(x ^ seed, 2654435761) >>> 0) % this.width;
     }
+    
     add(x) {
         this.hashSeeds.forEach((seed, i) => {
-            const idx = this.hash(x, seed);
+            const idx = this.#hash(x, seed);
             this.counts[i][idx]++;
         });
     }
+
     estimate(x) {
         return Math.min(
             ...this.hashSeeds.map((seed, i) => {
-                const idx = this.hash(x, seed);
+                const idx = this.#hash(x, seed);
                 return this.counts[i][idx];
             })
         );

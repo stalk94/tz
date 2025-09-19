@@ -49,6 +49,7 @@ class P2Median {
     get() {
         if (this.n === 0) return null;
         if (this.n <= 3) return this.q[Math.floor(this.q.length / 2)];
+        
         return this.q[1];
     }
 }

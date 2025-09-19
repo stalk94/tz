@@ -2,8 +2,8 @@ import Stats from "./Stats";
 import Backoff from "./Backoff";
 
 
-const INTERVAL_IDLE_TIMER = 1000;
-const IDLE_MAX_TIMEOUT = 5000;
+const INTERVAL_IDLE_TIMER = 1000;       // частота проверки на 'не помер ли сокет'
+const IDLE_MAX_TIMEOUT = 10000;         // через сколько простоя соединение считаеться повисшим
 const BASE_BACOFF_TIMEOUT = 250;
 const MAX_BACOFF_TIMEOUT = 8000;
 
@@ -25,15 +25,16 @@ class QuoteWorker {
         };
     }
 
-    clearIdle() {
+    #clearIdle() {
         if (this.idleTimer) {
             clearInterval(this.idleTimer);
             this.idleTimer = null;
         }
     }
 
-    watchIdle() {
-        this.clearIdle();
+    // контроль повисания сокета
+    #watchIdle() {
+        this.#clearIdle();
 
         this.idleTimer = setInterval(() => {
             if (this.stoppedByUser || !this.socket) return;
@@ -50,16 +51,17 @@ class QuoteWorker {
         }, INTERVAL_IDLE_TIMER);
     }
 
-    connect() {
+    #connect() {
         const url = "wss://trade.termplat.com:8800/?password=1234";
         this.socket = new WebSocket(url);
 
         this.socket.onopen = () => {
             this.backoff.reset();
             this.lastMessageAt = Date.now();
-            this.watchIdle();
+            this.#watchIdle();
         };
 
+        // ⚙️ обработка потока 
         this.socket.onmessage = (msg) => {
             try {
                 const data = JSON.parse(msg.data);
@@ -67,7 +69,7 @@ class QuoteWorker {
                 if (
                     typeof data !== "object" || data === null ||
                     typeof data.id !== "number" || !Number.isFinite(data.id) ||
-                    data.id < 0 || !Number.isSafeInteger(data.id) ||
+                    data.id < 0 || !Number.isSafeInteger(data.id) ||                    // предел id будет 9 квадролионов
                     typeof data.value !== "number" || !Number.isFinite(data.value) ||
                     data.value < 0 || data.value > 1e6
                 ) {
@@ -85,21 +87,21 @@ class QuoteWorker {
                 this.lastMessageAt = Date.now();
             } 
             catch (err) {
-                console.error(`❗⚠️ JSON error ${err}`);
+                console.error(`❗⚠️ JSON error`, err);
             }
         };
 
         this.socket.onerror = (event) => {
-            console.error("❗⚠️ WebSocket error event:", event);
+            console.error("❗⚠️ WebSocket error event: ", event);
         };
         
         this.socket.onclose = () => {
-            this.clearIdle();
+            this.#clearIdle();
             if (!this.stoppedByUser) {
                 const delay = this.backoff.next();
 
                 setTimeout(() => {
-                    if (!this.stoppedByUser) this.connect();
+                    if (!this.stoppedByUser) this.#connect();
                 }, delay);
             }
         };
@@ -109,12 +111,16 @@ class QuoteWorker {
         this.stoppedByUser = false;
         this.stats = new Stats();
 
+        // ставим наблюдателя
         this.stats.onAnomaly = (anomaly) => {
-            self.postMessage({ type: "anomaly", payload: anomaly });
+            self.postMessage({ 
+                type: "anomaly", 
+                payload: anomaly 
+            });
         };
 
         if (!this.socket || this.socket.readyState === WebSocket.CLOSED) {
-            this.connect();
+            this.#connect();
         }
     }
 
@@ -122,14 +128,14 @@ class QuoteWorker {
         this.stoppedByUser = true;
 
         try {
-             this.socket?.close(); 
+            this.socket?.close(); 
         } 
         catch (err) { 
             console.error('SOCKET stop error: ', err);
         }
 
         this.socket = null;
-        this.clearIdle();
+        this.#clearIdle();
     }
 
     getStats() {
