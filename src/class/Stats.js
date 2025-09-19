@@ -3,6 +3,7 @@ import P2Median from "./P2Median";
 
 
 const TOP_COUNT_MAX = 8;            // ограничение по размеру "словаря"
+const ANOMALY_Z_THRESHOLD = 2;      // сколько σ должно быть, чтобы признать аномалию
 
 /**
  * @typedef {Object} StatsResult
@@ -49,7 +50,7 @@ class Stats {
         if (std === 0) return;
         const z = (value - this.mean) / std;
 
-        if (Math.abs(z) > 4) {
+        if (Math.abs(z) > ANOMALY_Z_THRESHOLD) {
             const anomaly = {
                 id: this.n,
                 value,
